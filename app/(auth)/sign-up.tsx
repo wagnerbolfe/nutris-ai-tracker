@@ -1,3 +1,4 @@
+import { Colors } from '../../constants/Colors';
 import { useClerk, useSignUp, useSSO } from '@clerk/expo';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -148,7 +149,7 @@ export default function SignUpScreen() {
 
       {/* Background gradient */}
       <LinearGradient
-        colors={['#0F0F1A', '#1A0E2E', '#0F1729']}
+        colors={Colors.backgroundGradient}
         style={StyleSheet.absoluteFillObject}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -201,7 +202,7 @@ export default function SignUpScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Your full name"
-                    placeholderTextColor="#4A4A6A"
+                    placeholderTextColor={Colors.placeholderText}
                     value={fullName}
                     onChangeText={setFullName}
                     autoCapitalize="words"
@@ -209,7 +210,7 @@ export default function SignUpScreen() {
                     onSubmitEditing={() => emailRef.current?.focus()}
                     onFocus={() => setNameFocused(true)}
                     onBlur={() => setNameFocused(false)}
-                    selectionColor="#8B5CF6"
+                    selectionColor={Colors.primary}
                   />
                 </View>
               </View>
@@ -223,7 +224,7 @@ export default function SignUpScreen() {
                     ref={emailRef}
                     style={styles.input}
                     placeholder="Enter your email"
-                    placeholderTextColor="#4A4A6A"
+                    placeholderTextColor={Colors.placeholderText}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -232,7 +233,7 @@ export default function SignUpScreen() {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                     onFocus={() => setEmailFocused(true)}
                     onBlur={() => setEmailFocused(false)}
-                    selectionColor="#8B5CF6"
+                    selectionColor={Colors.primary}
                   />
                 </View>
               </View>
@@ -246,7 +247,7 @@ export default function SignUpScreen() {
                     ref={passwordRef}
                     style={styles.input}
                     placeholder="Create a strong password"
-                    placeholderTextColor="#4A4A6A"
+                    placeholderTextColor={Colors.placeholderText}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -254,7 +255,7 @@ export default function SignUpScreen() {
                     onSubmitEditing={onSignUp}
                     onFocus={() => setPasswordFocused(true)}
                     onBlur={() => setPasswordFocused(false)}
-                    selectionColor="#8B5CF6"
+                    selectionColor={Colors.primary}
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
                     <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
@@ -277,7 +278,7 @@ export default function SignUpScreen() {
                 disabled={isLoading}
               >
                 <LinearGradient
-                  colors={['#8B5CF6', '#6D28D9']}
+                  colors={[Colors.primary, Colors.primaryDark]}
                   style={styles.primaryBtnGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -305,7 +306,7 @@ export default function SignUpScreen() {
                 disabled={googleLoading}
               >
                 {googleLoading ? (
-                  <ActivityIndicator color="#8B5CF6" size="small" />
+                  <ActivityIndicator color={Colors.primary} size="small" />
                 ) : (
                   <>
                     <Text style={styles.googleIcon}>G</Text>
@@ -340,7 +341,7 @@ export default function SignUpScreen() {
                   <TextInput
                     style={[styles.input, styles.codeInput]}
                     placeholder="000000"
-                    placeholderTextColor="#4A4A6A"
+                    placeholderTextColor={Colors.placeholderText}
                     value={code}
                     onChangeText={setCode}
                     keyboardType="number-pad"
@@ -349,7 +350,7 @@ export default function SignUpScreen() {
                     onSubmitEditing={onVerify}
                     onFocus={() => setCodeFocused(true)}
                     onBlur={() => setCodeFocused(false)}
-                    selectionColor="#8B5CF6"
+                    selectionColor={Colors.primary}
                   />
                 </View>
               </View>
@@ -361,7 +362,7 @@ export default function SignUpScreen() {
                 disabled={isLoading}
               >
                 <LinearGradient
-                  colors={['#8B5CF6', '#6D28D9']}
+                  colors={[Colors.primary, Colors.primaryDark]}
                   style={styles.primaryBtnGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -401,7 +402,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F0F1A',
+    backgroundColor: Colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: '#4C1D95',
+    backgroundColor: Colors.blob1,
     opacity: 0.25,
     top: -80,
     left: -80,
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: Colors.blob2,
     opacity: 0.3,
     bottom: 100,
     right: -60,
@@ -438,7 +439,7 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.blob3,
     opacity: 0.1,
     top: 180,
     right: 30,
@@ -452,9 +453,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    backgroundColor: Colors.logoBackground,
     borderWidth: 1.5,
-    borderColor: 'rgba(139, 92, 246, 0.4)',
+    borderColor: Colors.logoBorder,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -468,47 +469,47 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: Colors.text,
     letterSpacing: -0.5,
     marginBottom: 4,
   },
   tagline: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: Colors.textSecondary,
     fontWeight: '400',
   },
 
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: Colors.cardBackground,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: Colors.cardBorder,
     padding: 24,
   },
   cardTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.text,
     marginBottom: 6,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: Colors.textSecondary,
     marginBottom: 24,
     lineHeight: 20,
   },
 
   errorBanner: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: Colors.errorBackground,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderColor: Colors.errorBorder,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginBottom: 16,
   },
   errorText: {
-    color: '#FCA5A5',
+    color: Colors.errorText,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -517,7 +518,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputLabel: {
-    color: '#D1D5DB',
+    color: Colors.inputLabel,
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 8,
@@ -526,16 +527,16 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    backgroundColor: Colors.inputBackground,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: Colors.cardBorder,
     paddingHorizontal: 14,
     height: 54,
   },
   inputWrapperFocused: {
-    borderColor: '#8B5CF6',
-    backgroundColor: 'rgba(139, 92, 246, 0.08)',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.inputFocusedBackground,
   },
   codeWrapper: {
     justifyContent: 'center',
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 15,
     fontWeight: '400',
   },
@@ -564,14 +565,14 @@ const styles = StyleSheet.create({
   },
 
   termsText: {
-    color: '#6B7280',
+    color: Colors.textMuted,
     fontSize: 12,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 18,
   },
   termsLink: {
-    color: '#8B5CF6',
+    color: Colors.primary,
     fontWeight: '600',
   },
 
@@ -579,7 +580,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 22,
-    shadowColor: '#8B5CF6',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
@@ -591,7 +592,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: Colors.text,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -605,10 +606,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: Colors.divider,
   },
   dividerText: {
-    color: '#6B7280',
+    color: Colors.textMuted,
     fontSize: 12,
     fontWeight: '500',
     paddingHorizontal: 12,
@@ -621,18 +622,18 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: Colors.googleButtonBorder,
+    backgroundColor: Colors.cardBackground,
     gap: 10,
   },
   googleIcon: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#EA4335',
+    color: Colors.googleIcon,
     fontFamily: 'serif',
   },
   googleBtnText: {
-    color: '#E5E7EB',
+    color: Colors.googleText,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -642,9 +643,9 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 22,
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    backgroundColor: Colors.logoBackground,
     borderWidth: 1.5,
-    borderColor: 'rgba(139, 92, 246, 0.4)',
+    borderColor: Colors.logoBorder,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -653,7 +654,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   emailHighlight: {
-    color: '#A78BFA',
+    color: Colors.primary,
     fontWeight: '600',
   },
   backBtn: {
@@ -661,7 +662,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   backBtnText: {
-    color: '#8B5CF6',
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -672,11 +673,11 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: {
-    color: '#9CA3AF',
+    color: Colors.textSecondary,
     fontSize: 14,
   },
   footerLink: {
-    color: '#8B5CF6',
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: '700',
   },

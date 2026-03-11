@@ -6,6 +6,13 @@ export interface UserProfile {
   fullName: string | null;
   email: string | null;
   imageUrl?: string | null;
+  gender?: string;
+  goal?: string;
+  workoutDays?: string;
+  birthdate?: string; // Stored as ISO string or DD/MM/YYYY
+  heightFeet?: string; // Optional: could be number
+  weightKg?: string;   // Optional: could be number
+  hasCompletedOnboarding?: boolean;
   createdAt?: unknown;
   updatedAt?: unknown;
 }

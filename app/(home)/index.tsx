@@ -1,4 +1,4 @@
-import { useAuth, useUser } from '@clerk/expo';
+import { useAuth } from '@clerk/expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
@@ -9,10 +9,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateSelector from '../../components/DateSelector';
+import HomeHeader from '../../components/HomeHeader';
 
 export default function HomeScreen() {
   const { signOut } = useAuth();
-  const { user } = useUser();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -31,11 +32,11 @@ export default function HomeScreen() {
       <View style={styles.blob2} />
 
       <SafeAreaView style={styles.safeArea}>
+        <HomeHeader />
+        <DateSelector />
+        
         <View style={styles.content}>
-          <Text style={styles.greeting}>
-            Hey, {user?.firstName ?? 'there'} 👋
-          </Text>
-          <Text style={styles.subtitle}>Welcome to Nutris AI Tracker</Text>
+
 
           <View style={styles.placeholderCard}>
             <Text style={styles.placeholderIcon}>🥗</Text>

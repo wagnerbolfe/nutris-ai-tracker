@@ -1,9 +1,11 @@
 import { ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createUserProfile, getUserProfile } from '../lib/firestore';
+import { Colors } from '../constants/Colors';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -30,6 +32,7 @@ function AuthGuard() {
   const { user } = useUser();
   const router = useRouter();
   const segments = useSegments();
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
 
   // Save user profile to Firestore on first sign-in (if not already saved)
   useEffect(() => {
@@ -53,20 +56,55 @@ function AuthGuard() {
   useEffect(() => {
     if (!isLoaded) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const inHomeGroup = segments[0] === '(home)';
+    const checkOnboardingAndNavigate = async () => {
+      const inAuthGroup = segments[0] === '(auth)';
+      const isStepForm = (segments[1] as any) === 'step-form';
 
-    if (isSignedIn && inAuthGroup) {
-      router.replace('/(home)');
-    } else if (!isSignedIn && !inAuthGroup) {
-      router.replace('/(auth)/sign-in');
-    }
-  }, [isSignedIn, isLoaded, segments]);
+      if (isSignedIn) {
+        if (inAuthGroup && !isStepForm) {
+          setIsCheckingOnboarding(true);
+          try {
+            // Check AsyncStorage first for speed
+            const completedLocal = await AsyncStorage.getItem('hasCompletedOnboarding');
+            
+            if (completedLocal === 'true') {
+              router.replace('/(home)');
+              setIsCheckingOnboarding(false);
+              return;
+            }
 
-  if (!isLoaded) {
+            // Fallback to Firestore if local storage doesn't have it
+            if (user?.id) {
+               const profile = await getUserProfile(user.id);
+               if (profile?.hasCompletedOnboarding) {
+                 await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
+                 router.replace('/(home)');
+               } else {
+                 router.replace('/(auth)/step-form' as any);
+               }
+            } else {
+              // Safety fallback
+              router.replace('/(home)');
+            }
+          } catch (e) {
+            console.error('Error checking onboarding status', e);
+            router.replace('/(home)');
+          } finally {
+             setIsCheckingOnboarding(false);
+          }
+        }
+      } else if (!isSignedIn && !inAuthGroup) {
+        router.replace('/(auth)/sign-in');
+      }
+    };
+
+    checkOnboardingAndNavigate();
+  }, [isSignedIn, isLoaded, segments, user?.id]);
+
+  if (!isLoaded || isCheckingOnboarding) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F0F1A' }}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
