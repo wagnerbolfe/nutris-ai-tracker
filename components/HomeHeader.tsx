@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Text } from './ThemedText';
 import { useUser } from '@clerk/expo';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
@@ -15,8 +16,8 @@ export default function HomeHeader() {
           style={styles.profileImage} 
         />
         <View style={styles.textContainer}>
-          <Text style={styles.welcomeText}>Welcome,</Text>
-          <Text style={styles.userName}>{user?.firstName || 'User'}</Text>
+          <Text style={styles.welcomeText} weight="500">Welcome,</Text>
+          <Text style={styles.userName} weight="700">{user?.firstName || 'User'}</Text>
         </View>
       </View>
       
@@ -57,11 +58,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     marginBottom: 2,
-    fontWeight: '500',
   },
   userName: {
     fontSize: 18,
-    fontWeight: '700',
     color: Colors.text,
   },
   notificationBtn: {

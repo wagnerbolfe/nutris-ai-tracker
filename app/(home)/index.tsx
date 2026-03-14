@@ -2,6 +2,7 @@ import { useAuth } from '@clerk/expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -9,8 +10,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CaloriesCard from '../../components/CaloriesCard';
 import DateSelector from '../../components/DateSelector';
 import HomeHeader from '../../components/HomeHeader';
+import RecentActivityCard from '../../components/RecentActivityCard';
+import WaterIntakeCard from '../../components/WaterIntakeCard';
 
 export default function HomeScreen() {
   const { signOut } = useAuth();
@@ -33,23 +37,22 @@ export default function HomeScreen() {
 
       <SafeAreaView style={styles.safeArea}>
         <HomeHeader />
-        <DateSelector />
-        
-        <View style={styles.content}>
-
-
-          <View style={styles.placeholderCard}>
-            <Text style={styles.placeholderIcon}>🥗</Text>
-            <Text style={styles.placeholderTitle}>Dashboard coming soon</Text>
-            <Text style={styles.placeholderText}>
-              Your AI-powered calorie tracking experience is being built.
-            </Text>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}
+        >
+          <DateSelector />
+          
+          <CaloriesCard />
+          <WaterIntakeCard />
+          <RecentActivityCard />
+          
+          <View style={styles.content}>
+            <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
+              <Text style={styles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.8}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );

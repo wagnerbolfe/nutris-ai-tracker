@@ -6,6 +6,10 @@ import { ActivityIndicator, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createUserProfile, getUserProfile } from '../lib/firestore';
 import { Colors } from '../constants/Colors';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 const tokenCache = {
   async getToken(key: string) {
@@ -119,6 +123,23 @@ function AuthGuard() {
 
 export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>

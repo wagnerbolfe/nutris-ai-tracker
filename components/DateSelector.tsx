@@ -1,17 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from './ThemedText';
 import { Colors } from '../constants/Colors';
+import { useDate } from '../contexts/DateContext';
 
 // Helper to get an array of recent and upcoming dates
 const getDates = () => {
   const dates = [];
   const today = new Date();
-  // Generate dates from 14 days ago to 7 days ahead
-  for (let i = -14; i <= 7; i++) {
-    const date = new Date();
-    date.setDate(today.getDate() + i);
+  
+  // Find the start of the current week (Sunday)
+  const currentDayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+  const startOfCurrentWeek = new Date(today);
+  startOfCurrentWeek.setDate(today.getDate() - currentDayOfWeek);
+  
+  // Find the start of the previous week
+  const startOfPreviousWeek = new Date(startOfCurrentWeek);
+  startOfPreviousWeek.setDate(startOfCurrentWeek.getDate() - 7);
+  
+  // Generate 21 days (3 weeks: previous, current, next)
+  for (let i = 0; i < 21; i++) {
+    const date = new Date(startOfPreviousWeek);
+    date.setDate(startOfPreviousWeek.getDate() + i);
     dates.push(date);
   }
+  
   return dates;
 };
 
@@ -19,7 +32,7 @@ const DATES = getDates();
 
 export default function DateSelector() {
   const today = new Date();
-  const [selectedDate, setSelectedDate] = useState<string>(today.toDateString());
+  const { selectedDate, setSelectedDate } = useDate();
   const flatListRef = useRef<FlatList>(null);
 
   // Auto-scroll to today initially
@@ -34,7 +47,7 @@ export default function DateSelector() {
 
   const renderItem = ({ item }: { item: Date }) => {
     const isToday = item.toDateString() === today.toDateString();
-    const isSelected = item.toDateString() === selectedDate;
+    const isSelected = item.toDateString() === selectedDate.toDateString();
     
     // Format Day (Mon, Tue, etc.) and Date (1, 2, 3...)
     const dayStr = item.toLocaleDateString('en-US', { weekday: 'short' });
@@ -46,10 +59,10 @@ export default function DateSelector() {
           styles.dateItemContainer,
           isSelected && styles.dateItemSelected
         ]}
-        onPress={() => setSelectedDate(item.toDateString())}
+        onPress={() => setSelectedDate(item)}
         activeOpacity={0.7}
       >
-        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>
+        <Text style={[styles.dayText, isSelected && styles.dayTextSelected]} weight="600">
           {dayStr}
         </Text>
         <View style={[
@@ -61,7 +74,7 @@ export default function DateSelector() {
             styles.dateText, 
             isSelected && styles.dateTextSelected,
             isToday && !isSelected && styles.dateTextToday
-          ]}>
+          ]} weight="700">
             {dateNum}
           </Text>
         </View>
@@ -118,7 +131,6 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 12,
-    fontWeight: '600',
     color: Colors.textSecondary,
     marginBottom: 8,
   },
@@ -143,7 +155,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 14,
-    fontWeight: '700',
     color: Colors.textSecondary,
   },
   dateTextSelected: {
