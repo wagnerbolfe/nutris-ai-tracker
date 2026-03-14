@@ -119,11 +119,11 @@ export async function logActivity(
 ): Promise<void> {
   const logRef = doc(db, 'users', userId, 'daily_logs', dateStr);
 
-  const isManual = options?.type === 'manual';
+  const isExercise = options?.type === 'manual' || options?.type === 'run' || options?.type === 'weight';
 
   await setDoc(logRef, {
     date: dateStr,
-    ...(isManual
+    ...(isExercise
       ? { caloriesBurned: increment(calories) }
       : { totalCalories: increment(calories) }),
     totalProtein: increment(protein),

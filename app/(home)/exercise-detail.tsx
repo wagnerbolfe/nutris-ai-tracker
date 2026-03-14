@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -31,11 +31,30 @@ function IntensitySlider({
 }) {
   const currentIdx = INTENSITIES.findIndex((i) => i.label === value);
   const current = INTENSITIES[currentIdx];
+  const trackWidthRef = useRef(0);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const handleTouch = (x: number) => {
+    const w = trackWidthRef.current;
+    if (w === 0) return;
+    const pct = Math.max(0, Math.min(x, w)) / w;
+    if (pct < 1 / 3) onChangeRef.current('Low');
+    else if (pct < 2 / 3) onChangeRef.current('Medium');
+    else onChangeRef.current('High');
+  };
 
   return (
     <View style={styles.sliderCard}>
-      {/* Track */}
-      <View style={styles.track}>
+      {/* Track — touch & drag to select intensity */}
+      <View
+        style={styles.track}
+        onLayout={(e) => { trackWidthRef.current = e.nativeEvent.layout.width; }}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderGrant={(e) => handleTouch(e.nativeEvent.locationX)}
+        onResponderMove={(e) => handleTouch(e.nativeEvent.locationX)}
+      >
         {INTENSITIES.map((item, idx) => {
           const isActive = idx <= currentIdx;
           return (
@@ -68,17 +87,14 @@ function IntensitySlider({
 
       {/* Labels */}
       <View style={styles.sliderLabels}>
-        {INTENSITIES.map((item, idx) => (
+        {INTENSITIES.map((item) => (
           <TouchableOpacity
             key={item.label}
             onPress={() => onChange(item.label)}
             style={styles.labelBtn}
           >
             <Text
-              style={[
-                styles.labelText,
-                item.label === value && { color: current.color },
-              ]}
+              style={[styles.labelText, item.label === value && { color: current.color }]}
               weight={item.label === value ? '700' : '400'}
             >
               {item.label}
@@ -128,9 +144,11 @@ export default function ExerciseDetailScreen() {
 
   const handleContinue = () => {
     const duration = getDuration();
-    // TODO: navigate to workout summary / calories estimate screen
-    console.log({ type: params.type, intensity, duration });
-    router.push('/(home)/add-activity');
+    if (duration <= 0) return;
+    router.push({
+      pathname: '/(home)/workout-result',
+      params: { type: params.type, title, intensity, duration: duration.toString() },
+    });
   };
 
   const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {

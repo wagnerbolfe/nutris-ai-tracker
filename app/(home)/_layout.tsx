@@ -76,7 +76,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       bg: 'rgba(56, 189, 248, 0.15)',
       onPress: () => {
         setShowModal(false);
-        router.push('/(home)/add-activity');
+        router.push('/(home)/water-intake');
       },
     },
     {

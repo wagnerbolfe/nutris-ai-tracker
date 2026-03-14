@@ -1,15 +1,17 @@
 import { useUser } from '@clerk/expo';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Keyboard, KeyboardAvoidingView, Modal, Platform, StyleSheet, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, StyleSheet, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { useDate } from '../contexts/DateContext';
 import { DailyLog, getDailyLog, getUserProfile, saveUserProfile } from '../lib/firestore';
+import { useRefresh } from '../contexts/RefreshContext';
 import { Text } from './ThemedText';
 
 export default function WaterIntakeCard() {
   const { selectedDateString } = useDate();
   const { user } = useUser();
+  const { refreshKey } = useRefresh();
   const [log, setLog] = useState<DailyLog | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,11 +20,6 @@ export default function WaterIntakeCard() {
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [editWater, setEditWater] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
-
-  // Images
-  const FULL_GLASS = require('../assets/images/full_glass.png');
-  const HALF_GLASS = require('../assets/images/half_glass.png');
-  const EMPTY_GLASS = require('../assets/images/empty_glass.png');
 
   // Fetch log and user AI stats when Date changes
   useEffect(() => {
@@ -43,29 +40,21 @@ export default function WaterIntakeCard() {
       }
     }
     fetchData();
-  }, [user?.id, selectedDateString]);
+  }, [user?.id, selectedDateString, refreshKey]);
 
-  // Safely parse AI targets (Liters)
-  // Default to 8 glasses (2.0 Liters) if undefined
+  // Safely parse AI targets (Liters) — default 2.0L
   const goalWater = profile?.dailyWater ? parseFloat(profile.dailyWater) : 2.0;
 
   // Actual consumed data (Liters)
   const consumedWater = log?.totalWater || 0;
 
-  // Convert to glasses
-  // Ensure the UI always displays exactly 9 glasses. The volume of each glass adapts to the user's goal.
-  const totalGlassesGoal = 9;
-  const glassVolume = goalWater / totalGlassesGoal;
-  
-  // How many completely full glasses
-  const fullGlassesCount = Math.floor(consumedWater / glassVolume);
-  // Remainder to see if we have a half glass
-  const remainderWater = consumedWater - (fullGlassesCount * glassVolume);
-  const hasHalfGlass = remainderWater >= (glassVolume / 2) && remainderWater < glassVolume;
-
-  const glassesLeft = Math.max(0, totalGlassesGoal - (consumedWater / glassVolume));
-
+  // Fixed glass volumes: full = 0.5L, half = 0.25L
+  const FULL_GLASS_L = 0.5;
+  const glassesLeft = Math.max(0, Math.ceil((goalWater - consumedWater) / FULL_GLASS_L));
   const progressPercent = goalWater > 0 ? Math.min(100, Math.round((consumedWater / goalWater) * 100)) : 0;
+
+  // Milestones for drop markers (25%, 50%, 75%)
+  const MILESTONES = [25, 50, 75];
 
   // Modal Handlers
   const openEditModal = () => {
@@ -77,14 +66,8 @@ export default function WaterIntakeCard() {
     if (!user?.id) return;
     setSavingProfile(true);
     try {
-      const payload = {
-        dailyWater: editWater,
-      };
-      
-      // Merge updating goal fields
+      const payload = { dailyWater: editWater };
       await saveUserProfile(user.id, payload);
-      
-      // Optimistically update local UI profile
       setProfile((prev: any) => ({ ...prev, ...payload }));
       setEditModalVisible(false);
     } catch (e) {
@@ -95,67 +78,84 @@ export default function WaterIntakeCard() {
     }
   };
 
-  const renderGlasses = () => {
-    const glasses = [];
-    let currentConsumed = fullGlassesCount;
-    let addedHalf = false;
-
-    // Render always exactly 9 glasses
-    for (let i = 0; i < 9; i++) {
-        let source;
-        if (currentConsumed > 0) {
-            source = FULL_GLASS;
-            currentConsumed--;
-        } else if (hasHalfGlass && !addedHalf) {
-            source = HALF_GLASS;
-            addedHalf = true;
-        } else {
-            source = EMPTY_GLASS;
-        }
-
-        glasses.push(
-            <Image 
-                key={`glass-${i}`} 
-                source={source} 
-                style={styles.glassImg} 
-                resizeMode="contain" 
-            />
-        );
-    }
-    return glasses;
-  };
-
   return (
     <View style={styles.cardContainer}>
+      {/* Header */}
       <View style={styles.headerRow}>
         <View style={styles.titleContainer}>
           <Text style={styles.title} weight="700">Water</Text>
-          <Text style={styles.subtitle} weight="500">{consumedWater.toFixed(2)}L / {goalWater.toFixed(2)}L ({progressPercent}% of your daily goal)</Text>
+          <Text style={styles.subtitle} weight="500">
+            {consumedWater.toFixed(2)}L / {goalWater.toFixed(2)}L
+          </Text>
         </View>
-        
+
         <TouchableOpacity style={styles.editBtn} onPress={openEditModal} activeOpacity={0.7}>
           <Ionicons name="pencil" size={16} color={Colors.textSecondary} />
           <Text style={styles.editText} weight="600">Edit</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.glassesWrapper}>
-        {loading ? (
-          <View style={{ height: 80, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator color="#38BDF8" />
+      {/* Progress Section */}
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color="#38BDF8" />
+        </View>
+      ) : (
+        <View style={styles.progressSection}>
+          {/* Percentage label */}
+          <View style={styles.percentRow}>
+            <Text style={styles.percentValue} weight="800">{progressPercent}%</Text>
+            <Text style={styles.percentLabel} weight="500">of daily goal</Text>
           </View>
-        ) : (
-          <View style={styles.glassesContainer}>
-            {renderGlasses()}
+
+          {/* Progress bar */}
+          <View style={styles.trackContainer}>
+            <View style={styles.track}>
+              {/* Fill */}
+              <View style={[styles.fill, { width: `${progressPercent}%` }]}>
+                {/* Shimmer stripe */}
+                <View style={styles.shimmer} />
+              </View>
+              {/* Drop markers at 25%, 50%, 75% */}
+              {MILESTONES.map((pct) => (
+                <View
+                  key={pct}
+                  style={[
+                    styles.marker,
+                    { left: `${pct}%` as any },
+                    progressPercent >= pct && styles.markerPassed,
+                  ]}
+                />
+              ))}
+            </View>
+            {/* Thumb */}
+            <View
+              style={[
+                styles.thumb,
+                { left: `${progressPercent}%` as any },
+              ]}
+            >
+              <Ionicons name="water" size={10} color="#FFF" />
+            </View>
           </View>
-        )}
-      </View>
-      
+
+          {/* Tick labels */}
+          <View style={styles.tickRow}>
+            <Text style={styles.tickText} weight="500">0L</Text>
+            <Text style={styles.tickText} weight="500">{(goalWater * 0.25).toFixed(1)}L</Text>
+            <Text style={styles.tickText} weight="500">{(goalWater * 0.5).toFixed(1)}L</Text>
+            <Text style={styles.tickText} weight="500">{(goalWater * 0.75).toFixed(1)}L</Text>
+            <Text style={styles.tickText} weight="500">{goalWater.toFixed(1)}L</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Footer */}
       <View style={styles.footerRow}>
-         <View style={[styles.macroIconBg, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
-            <Ionicons name="water" size={16} color="#38BDF8" />
-          </View>
-          <Text style={styles.footerText} weight="600">{Math.ceil(glassesLeft)} glasses water left</Text>
+        <View style={[styles.macroIconBg, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
+          <Ionicons name="water" size={16} color="#38BDF8" />
+        </View>
+        <Text style={styles.footerText} weight="600">{glassesLeft} glasses water left</Text>
       </View>
 
       {/* Edit Goals Modal */}
@@ -167,12 +167,12 @@ export default function WaterIntakeCard() {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : undefined}
               style={{ width: '100%' }}
             >
               <View style={styles.modalContainer}>
-                
+
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle} weight="700">Edit Water Goal</Text>
                   <TouchableOpacity onPress={() => setEditModalVisible(false)} style={styles.closeBtn}>
@@ -185,18 +185,18 @@ export default function WaterIntakeCard() {
                   <Text style={styles.inputLabel} weight="600">Water Goal (Liters)</Text>
                   <View style={styles.inputWrapper}>
                     <Ionicons name="water-outline" size={18} color="#38BDF8" style={styles.inputIcon} />
-                    <TextInput 
-                      style={styles.modalInput} 
-                      keyboardType="decimal-pad" 
-                      value={editWater} 
-                      onChangeText={setEditWater} 
+                    <TextInput
+                      style={styles.modalInput}
+                      keyboardType="decimal-pad"
+                      value={editWater}
+                      onChangeText={setEditWater}
                     />
                   </View>
                 </View>
 
-                <TouchableOpacity 
-                  style={[styles.modalSaveBtn, savingProfile && { opacity: 0.7 }]} 
-                  onPress={handleSaveGoals} 
+                <TouchableOpacity
+                  style={[styles.modalSaveBtn, savingProfile && { opacity: 0.7 }]}
+                  onPress={handleSaveGoals}
                   disabled={savingProfile}
                   activeOpacity={0.8}
                 >
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 10,
+    fontSize: 12,
     color: Colors.textSecondary,
   },
   editBtn: {
@@ -260,22 +260,111 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: 13,
   },
-  glassesWrapper: {
-    minHeight: 60,
-    marginBottom: 16,
-    marginTop: 16,
-  },
-  glassesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
+
+  // ── Loading ──
+  loadingBox: {
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 3,
+    marginBottom: 16,
   },
-  glassImg: {
-    width: 34,
-    height: 34,
+
+  // ── Progress section ──
+  progressSection: {
+    marginBottom: 20,
   },
+  percentRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginBottom: 14,
+  },
+  percentValue: {
+    fontSize: 36,
+    color: '#38BDF8',
+    letterSpacing: -1,
+  },
+  percentLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+
+  // ── Bar ──
+  trackContainer: {
+    position: 'relative',
+    height: 16,
+    marginBottom: 8,
+    justifyContent: 'center',
+  },
+  track: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.2)',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  fill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 5,
+    backgroundColor: '#38BDF8',
+    overflow: 'hidden',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: '20%',
+    width: '30%',
+    height: '50%',
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  marker: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: 'rgba(56, 189, 248, 0.35)',
+    marginLeft: -0.5,
+  },
+  markerPassed: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  thumb: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#38BDF8',
+    borderWidth: 2,
+    borderColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: -2,
+    marginLeft: -10,
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  // ── Tick labels ──
+  tickRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  tickText: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+  },
+
+  // ── Footer ──
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,6 +386,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFF',
   },
+
+  // ── Modal ──
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -371,5 +462,5 @@ const styles = StyleSheet.create({
   modalSaveText: {
     color: '#FFF',
     fontSize: 16,
-  }
+  },
 });
